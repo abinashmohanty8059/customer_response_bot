@@ -4,7 +4,6 @@ import Sidebar from '../components/Sidebar';
 import TicketEditor from '../components/TicketEditor';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { analyzeMessageWithAI, isApiConfigured } from '../services/gemini';
-import { classifyMessageOffline } from '../utils/fallback';
 
 export default function Dashboard() {
   const [conversations, setConversations] = useLocalStorage('customer_support_history', []);
@@ -77,28 +76,21 @@ export default function Dashboard() {
   const handleSave = () => {
     if (!message.trim() || !analysis) return;
 
-    const targetId = activeId || Date.now().toString();
-    const timestamp = new Date().toISOString();
+    // Every click on "Save Conversation" must create a NEW conversation entry
+    const targetId = Date.now().toString();
+    const createdAt = new Date().toISOString();
 
-    const updatedConversation = {
+    const newConversation = {
       id: targetId,
-      message,
+      customerMessage: message,
       category: analysis.category,
       priority: analysis.priority,
       sentiment: analysis.sentiment,
       reply,
-      timestamp
+      createdAt
     };
 
-    setConversations((prev) => {
-      const exists = prev.some((c) => c.id === targetId);
-      if (exists) {
-        return prev.map((c) => (c.id === targetId ? updatedConversation : c));
-      } else {
-        return [updatedConversation, ...prev];
-      }
-    });
-
+    setConversations((prev) => [newConversation, ...prev]);
     setActiveId(targetId);
   };
 
@@ -113,7 +105,7 @@ export default function Dashboard() {
 
   const handleSelectConversation = (conv) => {
     setActiveId(conv.id);
-    setMessage(conv.message);
+    setMessage(conv.customerMessage);
     setAnalysis({
       category: conv.category,
       priority: conv.priority,
@@ -131,6 +123,11 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteAll = () => {
+    setConversations([]);
+    handleClear();
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       <Navbar 
@@ -145,6 +142,7 @@ export default function Dashboard() {
           conversations={conversations}
           onSelectConversation={handleSelectConversation}
           onDeleteConversation={handleDeleteConversation}
+          onDeleteAll={handleDeleteAll}
           activeId={activeId}
           isOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen(false)}
