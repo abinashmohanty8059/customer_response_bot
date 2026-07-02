@@ -15,11 +15,34 @@ export default function Dashboard() {
   const [reply, setReply] = useState('');
   const [activeId, setActiveId] = useState(null);
 
+  // Layout & Theme States
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('dark_mode');
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
+
   // Status & Loading States
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isFallbackUsed, setIsFallbackUsed] = useState(false);
   const [isAiConnected, setIsAiConnected] = useState(false);
+
+  // Toggle Dark Mode Class
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+    window.localStorage.setItem('dark_mode', JSON.stringify(isDarkMode));
+  }, [isDarkMode]);
 
   // Check API configuration on mount
   useEffect(() => {
@@ -63,7 +86,7 @@ export default function Dashboard() {
       category: analysis.category,
       priority: analysis.priority,
       sentiment: analysis.sentiment,
-      reply, // save the current edited reply state
+      reply,
       timestamp
     };
 
@@ -109,16 +132,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
-      <Navbar isAiConnected={isAiConnected} />
+    <div className="flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <Navbar 
+        isAiConnected={isAiConnected} 
+        isDarkMode={isDarkMode} 
+        onToggleTheme={() => setIsDarkMode(!isDarkMode)} 
+      />
       
-      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar for Conversation History */}
         <Sidebar 
           conversations={conversations}
           onSelectConversation={handleSelectConversation}
           onDeleteConversation={handleDeleteConversation}
           activeId={activeId}
+          isOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen(false)}
         />
 
         {/* Current Ticket Editor */}
@@ -135,6 +164,8 @@ export default function Dashboard() {
           onSave={handleSave}
           onClear={handleClear}
           canSave={!!(message.trim() && analysis)}
+          isSidebarOpen={isSidebarOpen}
+          onToggleSidebar={() => setIsSidebarOpen(true)}
         />
       </div>
     </div>
