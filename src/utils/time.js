@@ -53,3 +53,35 @@ export function formatRelativeTime(dateStr) {
     return dateStr;
   }
 }
+
+/**
+ * Formats a ISO date string into a specific format for the details modal:
+ * e.g., "2 Jul 2026 • 10:53 PM"
+ */
+export function formatModalTime(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const date = new Date(dateStr);
+    
+    // Get day (numeric)
+    const day = date.getDate();
+    
+    // Get short month (e.g., "Jul")
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    
+    // Get year
+    const year = date.getFullYear();
+    
+    // Get time (e.g., "10:53 PM")
+    const time = date.toLocaleString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return `${day} ${month} ${year} • ${time}`;
+  } catch (e) {
+    console.error('Error formatting modal time:', e);
+    return dateStr;
+  }
+}

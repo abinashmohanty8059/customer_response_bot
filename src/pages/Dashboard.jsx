@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import TicketEditor from '../components/TicketEditor';
+import DetailsModal from '../components/DetailsModal';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { analyzeMessageWithAI, isApiConfigured } from '../services/gemini';
 
@@ -13,6 +15,9 @@ export default function Dashboard() {
   const [analysis, setAnalysis] = useState(null);
   const [reply, setReply] = useState('');
   const [activeId, setActiveId] = useState(null);
+
+  // Modal State
+  const [selectedConversationForModal, setSelectedConversationForModal] = useState(null);
 
   // Layout & Theme States
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -76,7 +81,6 @@ export default function Dashboard() {
   const handleSave = () => {
     if (!message.trim() || !analysis) return;
 
-    // Every click on "Save Conversation" must create a NEW conversation entry
     const targetId = Date.now().toString();
     const createdAt = new Date().toISOString();
 
@@ -104,8 +108,13 @@ export default function Dashboard() {
   };
 
   const handleSelectConversation = (conv) => {
+    // Opens the details modal instead of immediately loading it to workspace
+    setSelectedConversationForModal(conv);
+  };
+
+  const handleLoadIntoWorkspace = (conv) => {
     setActiveId(conv.id);
-    setMessage(conv.customerMessage);
+    setMessage(conv.customerMessage || conv.message || '');
     setAnalysis({
       category: conv.category,
       priority: conv.priority,
@@ -114,6 +123,7 @@ export default function Dashboard() {
     setReply(conv.reply);
     setError(null);
     setIsFallbackUsed(false);
+    setSelectedConversationForModal(null);
   };
 
   const handleDeleteConversation = (id) => {
@@ -121,6 +131,11 @@ export default function Dashboard() {
     if (activeId === id) {
       handleClear();
     }
+  };
+
+  const handleDeleteFromModal = (id) => {
+    handleDeleteConversation(id);
+    setSelectedConversationForModal(null);
   };
 
   const handleDeleteAll = () => {
@@ -166,6 +181,18 @@ export default function Dashboard() {
           onToggleSidebar={() => setIsSidebarOpen(true)}
         />
       </div>
+
+      {/* Details View Modal */}
+      <AnimatePresence>
+        {selectedConversationForModal && (
+          <DetailsModal
+            conversation={selectedConversationForModal}
+            onClose={() => setSelectedConversationForModal(null)}
+            onLoadIntoWorkspace={handleLoadIntoWorkspace}
+            onDelete={handleDeleteFromModal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

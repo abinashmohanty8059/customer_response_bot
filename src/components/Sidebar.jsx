@@ -166,8 +166,8 @@ export default function Sidebar({
                     </div>
 
                     {/* Message snippet */}
-                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 line-clamp-2 mb-3 leading-relaxed font-sans pl-1.5">
-                      {getTruncatedMessage(conv.customerMessage)}
+                    <p className="text-[15px] font-medium text-[#1F2937] dark:text-slate-100 line-clamp-2 mb-3 leading-[1.5] font-sans pl-1.5 whitespace-pre-wrap break-words">
+                      {conv.customerMessage || conv.message || ''}
                     </p>
 
                     {/* Date and Delete Action */}
